@@ -27,7 +27,8 @@ sudo apt install \
   libsndfile1-dev \
   libspeechd-dev \
   libavahi-compat-libdnssd-dev \
-  libzeroc-ice-dev
+  libzeroc-ice-dev \
+  libp11-dev
 ```
 
 If you intend to include grpc-support for the Mumbe server (murmur), you also have to install the following packages: `libgrpc++-dev` and `protobuf-compiler-grpc`
