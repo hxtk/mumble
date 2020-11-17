@@ -117,6 +117,29 @@
      </widget>
     </item>
     <item>
+     <widget class="QRadioButton" name="qrbImport">
+      <property name="toolTip">
+       <string>Use certificate from hardware security token</string>
+      </property>
+      <property name="whatsThis">
+       <string>This will configure mumble to use a PKCS #11 provider.</string>
+      </property>
+      <property name="text">
+       <string>Configure token certificate provider.</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>skin:actions/document-open.svg</normaloff>skin:actions/document-open.svg</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QRadioButton" name="qrbExport">
       <property name="enabled">
        <bool>false</bool>
