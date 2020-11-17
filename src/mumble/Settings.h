@@ -417,6 +417,12 @@ struct Settings {
 	KeyPair kpCertificate;
 	bool bSuppressIdentity;
 
+    /// The PKCS #11 Engine to be used by mumble, e.g.,
+    /// "/usr/lib64/pkcs11/opensc-pkcs11.so". If this string is non-empty,
+    /// Mumble will attempt to use a PKCS #11 security token to authenticate
+    /// before attempting to use the stored KeyPair.
+    QString Pkcs11EnginePath;
+
 	bool bShowTransmitModeComboBox;
 
 	// Accessibility

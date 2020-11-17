@@ -49,6 +49,9 @@ public:
 	static Settings::KeyPair generateNewCert(QString name = QString(), const QString &email = QString());
 	static QByteArray exportCert(const Settings::KeyPair &cert);
 	static Settings::KeyPair importCert(QByteArray, const QString & = QString());
+
+    // TODO(hxtk): Implement this in the .cpp file
+    static void configurePkcs11(const QString &engine);
 public slots:
 	void on_qleEmail_textChanged(const QString &);
 	void on_qpbExportFile_clicked();

@@ -152,6 +152,8 @@ int CertWizard::nextId() const {
 				return 2;
 			else if (qrbExport->isChecked())
 				return 3;
+            else if (qrbToken->isChecked())
+                return 6;
 			return -1;
 		}
 		case 2: // Import
@@ -205,6 +207,9 @@ void CertWizard::initializePage(int id) {
 	if (id == 2) {
 		on_qleImportFile_textChanged(qleImportFile->text());
 	}
+    if (id == 6) {
+        // TODO(hxtk): Initialize page for PKCS#11 engine selection.
+    }
 
 	QWizard::initializePage(id);
 }
@@ -482,6 +487,44 @@ Settings::KeyPair CertWizard::importCert(QByteArray data, const QString &pw) {
 		BIO_free(mem);
 
 	return kp;
+}
+
+void CertWizard::configurePkcs11(const QString &enginePath) {
+    PKCS11_CTX *ctx = PKCS11_CTX_new();
+
+    // TODO(hxtk): Load engine from engine path and
+    int rc = PKCS11_CTX_load(ctx, enginePath.toStdString().c_str());
+    if (rc == 1) {
+        // TODO(hxtk): Failed to load engine.
+        return;
+    }
+
+    unsigned int nslots;
+    PKCS11_SLOT *slots;
+    rc = PKCS11_enumerate_slots(ctx, &slots, &nslots);
+    if (rc == 1) {
+        // TODO(hxtk): Soft failure on no token present.
+        return;
+    }
+
+    PKCS11_SLOT *slot = PKCS11_find_token(ctx, slots, nslots);
+    if (slot == nullptr || slot->token == nullptr) {
+        // TODO(hxtk): Soft failure on token has no certs.
+        return;
+    }
+
+    int logged_in;
+    rc = PKCS11_is_logged_in(slot, 0, &logged_in);
+    if (rc == 1) {
+        // TODO(hxtk): Handle failure to check logged in status
+        return;
+    }
+
+    if (!logged_in) {
+        // TODO(hxtk): Log in to token.
+    }
+
+    PKCS11_CTX_free(ctx);
 }
 
 QByteArray CertWizard::exportCert(const Settings::KeyPair &kp) {
