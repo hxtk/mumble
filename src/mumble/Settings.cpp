@@ -927,6 +927,8 @@ void Settings::load(QSettings *settings_ptr) {
 	if (!qba.isEmpty())
 		kpCertificate = CertWizard::importCert(qba);
 
+    SAVELOAD(pkcs11EnginePath, "net/pkcs11engine");
+
 	SAVELOAD(bShortcutEnable, "shortcut/enable");
 	SAVELOAD(bSuppressMacEventTapWarning, "shortcut/mac/suppresswarning");
 	SAVELOAD(bEnableEvdev, "shortcut/linux/evdev/enable");
@@ -1293,8 +1295,12 @@ void Settings::save() {
 	SAVELOAD(iLCDUserViewMinColWidth, "lcd/userview/mincolwidth");
 	SAVELOAD(iLCDUserViewSplitterWidth, "lcd/userview/splitterwidth");
 
-	QByteArray qba = CertWizard::exportCert(kpCertificate);
-	settings_ptr->setValue(QLatin1String("net/certificate"), qba);
+    if (pkcs11EnginePath == "") {
+        QByteArray qba = CertWizard::exportCert(kpCertificate);
+        settings_ptr->setValue(QLatin1String("net/certificate"), qba);
+    } else {
+        SAVELOAD(pkcs11EnginePath, "net/pkcs11engine");
+    }
 
 	SAVELOAD(bShortcutEnable, "shortcut/enable");
 	SAVELOAD(bSuppressMacEventTapWarning, "shortcut/mac/suppresswarning");
