@@ -489,42 +489,93 @@ Settings::KeyPair CertWizard::importCert(QByteArray data, const QString &pw) {
 	return kp;
 }
 
-void CertWizard::configurePkcs11(const QString &enginePath) {
+bool CertWizard::validateToken(const QString &enginePath) {
     PKCS11_CTX *ctx = PKCS11_CTX_new();
 
-    // TODO(hxtk): Load engine from engine path and
-    int rc = PKCS11_CTX_load(ctx, enginePath.toStdString().c_str());
-    if (rc == 1) {
+    int rc = PKCS11_CTX_load(ctx, enginePath.toUtf8().constData());
+    if (rc != 0) {
         // TODO(hxtk): Failed to load engine.
-        return;
+        return false;
     }
 
     unsigned int nslots;
     PKCS11_SLOT *slots;
     rc = PKCS11_enumerate_slots(ctx, &slots, &nslots);
-    if (rc == 1) {
+    if (rc != 0) {
         // TODO(hxtk): Soft failure on no token present.
-        return;
+        return false;
     }
 
     PKCS11_SLOT *slot = PKCS11_find_token(ctx, slots, nslots);
     if (slot == nullptr || slot->token == nullptr) {
-        // TODO(hxtk): Soft failure on token has no certs.
-        return;
+        // Token has no certs
+        return false;
     }
 
     int logged_in;
     rc = PKCS11_is_logged_in(slot, 0, &logged_in);
-    if (rc == 1) {
-        // TODO(hxtk): Handle failure to check logged in status
-        return;
+    if (rc != 0) {
+        // Handle failure to check logged in status
+        return false;
     }
 
     if (!logged_in) {
         // TODO(hxtk): Log in to token.
     }
 
+    PKCS11_CERT *cert;
+    unsigned int ncerts;
+    rc = PKCS11_enumerate_certs(slot->token, &cert, &ncerts);
+    if (rc != 0 || ncerts < 1) {
+        // No valid certificates found.
+        return false;
+    }
+
+    PKCS11_KEY *key = PKCS11_find_key(cert);
+    if (key == nullptr) {
+        // Certificate key missing.
+        return false;
+    }
+
+    if (!key->isPrivate) {
+        return false;
+    }
+    if (key->needLogin) {
+        // TODO(hxtk): Log in to token.
+    }
+
+    if (key->evp_key == nullptr) {
+        return false;
+    }
+    EVP_PKEY *privkey = key->evp_key;
+
+    unsigned char *dptr;
+    QByteArray key_bytes, cert_bytes;
+
+    key_bytes.resize(i2d_PrivateKey(privkey, nullptr));
+    dptr = reinterpret_cast< unsigned char * >(key_bytes.data());
+    i2d_PrivateKey(privkey, &dptr);
+
+    cert_bytes.resize(i2d_X509(cert->x509, nullptr));
+    dptr = reinterpret_cast< unsigned char * >(cert_bytes.data());
+    i2d_X509(cert->x509, &dptr);
+
+    QSslCertificate qscCert = QSslCertificate(cert_bytes, QSsl::Der);
+    QSslKey qskKey          = QSslKey(key_bytes, QSsl::Rsa, QSsl::Der);
+    QList< QSslCertificate > qlCerts;
+    qlCerts << qscCert;
+
+    bool valid = !qskKey.isNull();
+    foreach (const QSslCertificate &cert, qlCerts)
+        valid = valid && !cert.isNull();
+    if (!valid) {
+        return false;
+    }
+
     PKCS11_CTX_free(ctx);
+
+    g.s.kpCertificate = Settings::KeyPair(qlCerts, qskKey);
+    return true;
 }
 
 QByteArray CertWizard::exportCert(const Settings::KeyPair &kp) {
