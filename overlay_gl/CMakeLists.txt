@@ -36,7 +36,7 @@ if(NOT APPLE)
 		# message about the 32bit target potentially failing due to missing g++-multilib.
 		CHECK_INCLUDE_FILE("sys/cdefs.h" FOUND_CDEFS "-m32")
 		if(NOT FOUND_CDEFS)
-			message(FATAL_ERROR "Can't find the 32bit version of sys/cdefs.h - did you install g++-multilib?")
+			message(STATUS "Can't find the 32bit version of sys/cdefs.h - did you install g++-multilib?")
 		else()
 			message(STATUS "\nIf the 32 bit overlay library fails to compile, make sure the requirements are installed (\"g++-multilib\" package on Debian-based distributions).\n")
 		endif()
