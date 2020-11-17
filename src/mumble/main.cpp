@@ -653,29 +653,31 @@ int main(int argc, char **argv) {
 
 	g.s.uiUpdateCounter = 2;
 
-	if (!CertWizard::validateCert(g.s.kpCertificate)) {
-		QDir qd(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
-		QFile qf(qd.absoluteFilePath(QLatin1String("MumbleAutomaticCertificateBackup.p12")));
-		if (qf.open(QIODevice::ReadOnly | QIODevice::Unbuffered)) {
-			Settings::KeyPair kp = CertWizard::importCert(qf.readAll());
-			qf.close();
-			if (CertWizard::validateCert(kp))
-				g.s.kpCertificate = kp;
-		}
-		if (!CertWizard::validateCert(g.s.kpCertificate)) {
-			CertWizard *cw = new CertWizard(g.mw);
-			cw->exec();
-			delete cw;
+    if (!CertWizard::validateToken(g.s.pkcs11EnginePath)) {
+        if (!CertWizard::validateCert(g.s.kpCertificate)) {
+            QDir qd(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+            QFile qf(qd.absoluteFilePath(QLatin1String("MumbleAutomaticCertificateBackup.p12")));
+            if (qf.open(QIODevice::ReadOnly | QIODevice::Unbuffered)) {
+                Settings::KeyPair kp = CertWizard::importCert(qf.readAll());
+                qf.close();
+                if (CertWizard::validateCert(kp))
+                    g.s.kpCertificate = kp;
+            }
+            if (!CertWizard::validateCert(g.s.kpCertificate)) {
+                CertWizard *cw = new CertWizard(g.mw);
+                cw->exec();
+                delete cw;
 
-			if (!CertWizard::validateCert(g.s.kpCertificate)) {
-				g.s.kpCertificate = CertWizard::generateNewCert();
-				if (qf.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Unbuffered)) {
-					qf.write(CertWizard::exportCert(g.s.kpCertificate));
-					qf.close();
-				}
-			}
-		}
-	}
+                if (!CertWizard::validateCert(g.s.kpCertificate)) {
+                    g.s.kpCertificate = CertWizard::generateNewCert();
+                    if (qf.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Unbuffered)) {
+                        qf.write(CertWizard::exportCert(g.s.kpCertificate));
+                        qf.close();
+                    }
+                }
+            }
+        }
+    }
 
 	if (QDateTime::currentDateTime().daysTo(g.s.kpCertificate.first.first().expiryDate()) < 14)
 		g.l->log(Log::Warning,
